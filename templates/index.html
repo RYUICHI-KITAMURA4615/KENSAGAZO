@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>検査画像アップロード</title>
+</head>
+<body>
+  <h1>カメラで撮影して判定</h1>
+  <video id="video" autoplay></video><br>
+  <button onclick="takePhoto()">撮影して判定</button>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <p id="result"></p>
+
+  <script>
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      document.getElementById("video").srcObject = stream;
+    });
+
+    function takePhoto() {
+      const canvas = document.getElementById("canvas");
+      const video = document.getElementById("video");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("image", blob, "photo.jpg");
+        fetch("/predict", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("result").innerText = "判定結果: " + data.result;
+        });
+      });
+    }
+  </script>
+</body>
+</html>
